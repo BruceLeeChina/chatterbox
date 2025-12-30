@@ -323,4 +323,4 @@ with gr.Blocks() as demo:
         outputs=[audio_output],
     )
 
-demo.launch()  # 启动时不使用MCP服务器以避免错误
+demo.launch(server_name="0.0.0.0", server_port=7860)  # 允许外部访问，绑定到所有网络接口

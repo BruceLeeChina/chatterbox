@@ -41,6 +41,8 @@ Alternatively, you can install from source:
 # conda activate chatterbox
 
 git clone https://github.com/resemble-ai/chatterbox.git
+
+git clone https://github.com/BruceLeeChina/chatterbox.git
 cd chatterbox
 pip install -e .
 ```
