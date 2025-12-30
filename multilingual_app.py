@@ -144,6 +144,15 @@ def get_or_load_model():
             if hasattr(MODEL, 'to') and str(MODEL.device) != DEVICE:
                 MODEL.to(DEVICE)
             print(f"Model loaded successfully. Internal device: {getattr(MODEL, 'device', 'N/A')}")
+        except RuntimeError as e:
+            if "Attempting to deserialize object on a CUDA device" in str(e):
+                print("Device mismatch detected. Loading model on CPU instead.")
+                # 强制在CPU上加载模型
+                MODEL = ChatterboxMultilingualTTS.from_pretrained("cpu")
+                print(f"Model loaded successfully on CPU. Internal device: {getattr(MODEL, 'device', 'N/A')}")
+            else:
+                print(f"Error loading model: {e}")
+                raise
         except Exception as e:
             print(f"Error loading model: {e}")
             raise
@@ -314,4 +323,4 @@ with gr.Blocks() as demo:
         outputs=[audio_output],
     )
 
-demo.launch(mcp_server=True)
+demo.launch()  # 启动时不使用MCP服务器以避免错误
