@@ -46,3 +46,11 @@ checkpoints/
 
 # Ignore generated sample .wav files
 **/*.wav
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+*.class
+target/*
