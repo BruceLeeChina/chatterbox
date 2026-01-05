@@ -1,0 +1,34 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  chatterbox-tts:
+    build:
+      context: .
+      dockerfile: Dockerfile.tts
+    image: chatterbox-tts:1.0.0
+    container_name: chatterbox-tts
+    ports:
+      - "8001:8001"
+    environment:
+      - MODEL_NAME=chatterbox-mtl
+      - DEFAULT_LANGUAGE=zh
+      - MAX_TEXT_LENGTH=300
+      - MAX_CONCURRENT_TASKS=10
+      - DB_POOL_SIZE=10
+      - TTS_THREAD_POOL_SIZE=4
+      - DEVICE=cuda
+    volumes:
+      - ./temp_dir:/app/temp_dir
+      - ./output_dir:/app/output_dir
+      - ./templates:/app/templates
+      - ./server.py:/app/server.py
+      # 添加模型目录挂载
+      - /opt/chatterbox-tts/models:/root/.cache/modelscope/hub/models
+    networks:
+      - tts-network
+    restart: unless-stopped
+
+networks:
+  tts-network:
+    driver: bridge

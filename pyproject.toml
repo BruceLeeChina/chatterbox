@@ -28,7 +28,9 @@ dependencies = [
     "aiofiles",
     "uvicorn",
     "fastapi",
-    "jinja2"
+    "jinja2",
+    "soundfile",
+    "xformers"
 ]
 
 [project.urls]

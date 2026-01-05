@@ -25,7 +25,19 @@ from fastapi.templating import Jinja2Templates
 # 导入 TTS 相关模块
 import torch
 import soundfile as sf
-from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES
+
+# 尝试导入TTS模块，先尝试启用xformers，失败则禁用
+try:
+    from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES
+except ImportError as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"导入TTS模块失败，可能是xformers兼容性问题: {e}")
+    # 尝试禁用xformers并重新导入
+    import os
+    os.environ["XFORMERS_DISABLE"] = "1"  # 禁用xformers
+    logger.info("已禁用xformers，重新尝试导入TTS模块")
+    from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES
 
 # 日志配置
 logging.basicConfig(
@@ -224,9 +236,18 @@ def get_or_load_model():
         logger.info("正在初始化TTS模型...")
         try:
             if args.model_path:
+                # 尝试直接加载指定路径的模型
                 MODEL = ChatterboxMultilingualTTS.from_pretrained(args.model_path, device=args.device)
             else:
-                MODEL = ChatterboxMultilingualTTS.from_pretrained(args.device)
+                # 尝试加载模型，如果设备不匹配则强制在CPU上加载
+                try:
+                    MODEL = ChatterboxMultilingualTTS.from_pretrained(args.device)
+                except RuntimeError as e:
+                    if "torch.storage.UntypedStorage" in str(e) or "deserialize object on a CUDA device" in str(e):
+                        logger.warning("检测到设备不匹配，尝试在CPU上加载模型")
+                        MODEL = ChatterboxMultilingualTTS.from_pretrained("cpu")
+                    else:
+                        raise
             
             if hasattr(MODEL, 'to'):
                 MODEL.to(args.device)
@@ -306,6 +327,63 @@ def generate_tts_audio_sync(
             "error": str(e)
         }
 
+async def send_callback_notification(task_id: str, callback_url: str) -> bool:
+    """发送回调通知"""
+    try:
+        # 获取任务详情
+        task_result = await db_pool.fetchone(
+            "SELECT task_id, status, output_path, error_msg, app_id, biz_type, biz_unique_id FROM tts_tasks WHERE task_id = ?",
+            (task_id,)
+        )
+
+        if not task_result:
+            logger.error(f"无法找到任务{task_id}的信息，无法发送回调")
+            return False
+
+        task_id, status, output_path, error_msg, app_id, biz_type, biz_unique_id = task_result
+
+        # 构建回调数据
+        callback_data = {
+            "task_id": task_id,
+            "status": status,
+            "timestamp": int(time.time())
+        }
+
+        # 添加业务标识信息
+        if app_id:
+            callback_data["app_id"] = app_id
+        if biz_type:
+            callback_data["biz_type"] = biz_type
+        if biz_unique_id:
+            callback_data["biz_unique_id"] = biz_unique_id
+
+        import json
+        if status == TaskStatus.COMPLETED.value and output_path:
+            callback_data["result"] = {
+                "output_url": f"/output/{os.path.basename(output_path)}",
+                "audio_format": os.path.splitext(output_path)[1][1:]
+            }
+        elif status == TaskStatus.FAILED.value and error_msg:
+            callback_data["error_msg"] = error_msg
+
+        # 发送POST请求
+        async with aiohttp.ClientSession() as session:
+            async with session.post(callback_url, json=callback_data, timeout=10) as response:
+                if response.status == 200:
+                    # 更新回调状态为成功
+                    await db_pool.execute(
+                        "UPDATE tts_tasks SET callback_status = ? WHERE task_id = ?",
+                        ("success", task_id)
+                    )
+                    logger.info(f"任务{task_id}的回调通知发送成功")
+                    return True
+                else:
+                    logger.error(f"任务{task_id}的回调通知发送失败，状态码: {response.status}")
+                    return False
+    except Exception as e:
+        logger.error(f"发送回调通知时发生错误: {e}")
+        return False
+
 async def process_tts_task(task_id: str):
     """处理TTS任务"""
     logger.info(f"开始处理TTS任务: {task_id}")
@@ -334,6 +412,7 @@ async def process_tts_task(task_id: str):
         cfg_weight = task_info["cfg_weight"]
         seed_num = task_info["seed_num"]
         output_path = task_info["output_path"]
+        callback_url = task_info["callback_url"]
         
         # 在线程池中执行TTS任务
         loop = asyncio.get_event_loop()
@@ -365,12 +444,24 @@ async def process_tts_task(task_id: str):
             )
             logger.error(f"TTS任务失败: {task_id}, 错误: {result['error']}")
         
+        # 检查是否有回调URL，如果有则发送回调通知
+        if callback_url:
+            # 在后台发送回调，不阻塞任务处理
+            asyncio.create_task(send_callback_notification(task_id, callback_url))
+            
     except Exception as e:
         logger.error(f"处理TTS任务时发生错误: {e}")
         await db_pool.execute(
             "UPDATE tts_tasks SET status = ?, progress = 0, error_msg = ?, updated_time = ? WHERE task_id = ?",
             (TaskStatus.FAILED.value, str(e), int(time.time()), task_id)
         )
+        
+        # 检查是否有回调URL，如果有则发送失败回调
+        task_info = await db_pool.fetchone(
+            "SELECT callback_url FROM tts_tasks WHERE task_id = ?", (task_id,)
+        )
+        if task_info and task_info["callback_url"]:
+            asyncio.create_task(send_callback_notification(task_id, task_info["callback_url"]))
 
 async def task_processor():
     """TTS任务处理器"""
@@ -776,28 +867,47 @@ async def download_tts_audio(task_id: str = Query(..., description="任务ID")):
 async def list_tts_tasks(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    status: Optional[str] = Query(None, description="任务状态过滤")
+    status: Optional[str] = Query(None, description="任务状态过滤"),
+    language_id: Optional[str] = Query(None, description="语言ID过滤"),
+    app_id: Optional[str] = Query(None, description="应用ID过滤"),
+    biz_type: Optional[str] = Query(None, description="业务类型过滤")
 ):
     """获取TTS任务列表"""
     try:
         offset = (page - 1) * page_size
         
+        # 构建查询条件
+        conditions = []
+        params = []
+        
         if status:
-            count_result = await db_pool.fetchone(
-                "SELECT COUNT(*) as total FROM tts_tasks WHERE status = ?", (status,)
-            )
-            tasks_result = await db_pool.fetchall(
-                "SELECT task_id, text_content, language_id, status, progress, created_time, updated_time, callback_status FROM tts_tasks WHERE status = ? ORDER BY created_time DESC LIMIT ? OFFSET ?",
-                (status, page_size, offset)
-            )
-        else:
-            count_result = await db_pool.fetchone(
-                "SELECT COUNT(*) as total FROM tts_tasks"
-            )
-            tasks_result = await db_pool.fetchall(
-                "SELECT task_id, text_content, language_id, status, progress, created_time, updated_time, callback_status FROM tts_tasks ORDER BY created_time DESC LIMIT ? OFFSET ?",
-                (page_size, offset)
-            )
+            conditions.append("status = ?")
+            params.append(status)
+        if language_id:
+            conditions.append("language_id = ?")
+            params.append(language_id)
+        if app_id:
+            conditions.append("app_id = ?")
+            params.append(app_id)
+        if biz_type:
+            conditions.append("biz_type = ?")
+            params.append(biz_type)
+        
+        where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+        
+        # 查询总数
+        count_query = f"SELECT COUNT(*) as total FROM tts_tasks {where_clause}"
+        count_result = await db_pool.fetchone(count_query, params)
+        
+        # 查询任务列表
+        task_query = f"""
+            SELECT task_id, text_content, language_id, status, progress, created_time, updated_time, callback_status 
+            FROM tts_tasks 
+            {where_clause} 
+            ORDER BY created_time DESC 
+            LIMIT ? OFFSET ?
+        """
+        tasks_result = await db_pool.fetchall(task_query, [*params, page_size, offset])
         
         tasks = []
         for row in tasks_result:
@@ -823,6 +933,287 @@ async def list_tts_tasks(
         
     except Exception as e:
         logger.error(f"查询任务列表失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/batch_tts_operation")
+async def batch_tts_operation(
+    operation: str = Form(..., description="操作类型: submit"),
+    text_list: Optional[str] = Form(None, description="文本列表，JSON格式: [{\"text\":\"文本内容\",\"language_id\":\"zh\"}]"),
+    callback_url: Optional[str] = Form(None, description="任务完成后回调URL"),
+    app_id: Optional[str] = Form(None, description="应用ID"),
+    biz_type: Optional[str] = Form(None, description="业务类型")
+):
+    """批量操作TTS任务"""
+    try:
+        if operation == "submit":
+            if not text_list:
+                raise HTTPException(status_code=400, detail="批量提交任务时必须提供text_list")
+            
+            import json
+            try:
+                texts = json.loads(text_list)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="text_list格式错误，必须是有效的JSON字符串")
+            
+            if not isinstance(texts, list):
+                raise HTTPException(status_code=400, detail="text_list必须是数组格式")
+            
+            if len(texts) > 50:
+                raise HTTPException(status_code=400, detail="一次最多只能提交50个任务")
+            
+            results = []
+            for i, text_item in enumerate(texts):
+                text = text_item.get("text", "")
+                language_id = text_item.get("language_id", DEFAULT_LANGUAGE)
+                
+                if not text:
+                    results.append({
+                        "code": 1,
+                        "msg": f"第{i+1}个任务文本内容不能为空",
+                        "index": i
+                    })
+                    continue
+                
+                if len(text) > MAX_TEXT_LENGTH:
+                    results.append({
+                        "code": 1,
+                        "msg": f"第{i+1}个任务文本长度不能超过{MAX_TEXT_LENGTH}个字符",
+                        "index": i
+                    })
+                    continue
+                
+                if language_id not in SUPPORTED_LANGUAGES:
+                    results.append({
+                        "code": 1,
+                        "msg": f"第{i+1}个任务语言不支持: {language_id}",
+                        "index": i
+                    })
+                    continue
+                
+                # 生成任务ID
+                task_id = str(uuid.uuid4())
+                
+                # 生成输出文件路径
+                output_filename = f"{task_id}.wav"
+                output_path = os.path.join(args.output_dir, output_filename)
+                
+                # 创建任务记录
+                await db_pool.execute('''
+                    INSERT INTO tts_tasks (
+                        task_id, text_content, language_id,
+                        output_path, status, progress, created_time, updated_time,
+                        callback_url, callback_status, app_id, biz_type
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    task_id, text, language_id,
+                    output_path, TaskStatus.PENDING.value, 0,
+                    int(time.time()), int(time.time()),
+                    callback_url, "pending", app_id, biz_type
+                ))
+                
+                # 添加到任务队列
+                await task_queue.put({"task_id": task_id})
+                
+                results.append({
+                    "code": 0,
+                    "msg": "任务提交成功",
+                    "task_id": task_id,
+                    "index": i,
+                    "output_url": f"/output/{output_filename}"
+                })
+            
+            return {
+                "code": 0,
+                "msg": "批量任务提交完成",
+                "results": results
+            }
+        else:
+            raise HTTPException(status_code=400, detail=f"不支持的操作类型: {operation}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"批量操作失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/batch_get_tts_status")
+async def batch_get_tts_status(
+    task_ids: str = Form(..., description="任务ID列表，逗号分隔")
+):
+    """批量查询TTS任务状态"""
+    try:
+        if not task_ids:
+            raise HTTPException(status_code=400, detail="必须提供任务ID列表")
+        
+        # 解析任务ID列表
+        task_list = [tid.strip() for tid in task_ids.split(",") if tid.strip()]
+        if not task_list:
+            raise HTTPException(status_code=400, detail="任务ID列表不能为空")
+        
+        # 批量查询任务状态
+        placeholders = ",".join(["?"] * len(task_list))
+        results = await db_pool.fetchall(
+            f"SELECT task_id, status, progress, updated_time, callback_status FROM tts_tasks WHERE task_id IN ({placeholders})",
+            task_list
+        )
+        
+        # 构建结果字典
+        task_status_map = {}
+        for result in results:
+            task_id, status, progress, updated_time, callback_status = result
+            task_status_map[task_id] = {
+                "code": 0,
+                "task_id": task_id,
+                "status": status,
+                "progress": progress,
+                "updated_time": updated_time,
+                "callback_status": callback_status
+            }
+        
+        # 为未找到的任务添加错误信息
+        for task_id in task_list:
+            if task_id not in task_status_map:
+                task_status_map[task_id] = {
+                    "code": 1,
+                    "task_id": task_id,
+                    "msg": "任务不存在"
+                }
+        
+        return {
+            "code": 0,
+            "msg": "批量查询任务状态完成",
+            "results": list(task_status_map.values())
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"批量查询任务状态失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/batch_get_tts_result")
+async def batch_get_tts_result(
+    task_ids: str = Form(..., description="任务ID列表，逗号分隔")
+):
+    """批量查询TTS任务结果"""
+    try:
+        if not task_ids:
+            raise HTTPException(status_code=400, detail="必须提供任务ID列表")
+        
+        # 解析任务ID列表
+        task_list = [tid.strip() for tid in task_ids.split(",") if tid.strip()]
+        if not task_list:
+            raise HTTPException(status_code=400, detail="任务ID列表不能为空")
+        
+        # 批量查询任务结果
+        placeholders = ",".join(["?"] * len(task_list))
+        results = await db_pool.fetchall(
+            f"SELECT task_id, status, output_path, error_msg, callback_status, audio_format, sample_rate, text_content, language_id FROM tts_tasks WHERE task_id IN ({placeholders})",
+            task_list
+        )
+        
+        # 构建结果字典
+        task_result_map = {}
+        for result in results:
+            task_id, status, output_path, error_msg, callback_status, audio_format, sample_rate, text_content, language_id = result
+            
+            response_data = {
+                "code": 0,
+                "task_id": task_id,
+                "status": status,
+                "callback_status": callback_status
+            }
+            
+            if status == TaskStatus.COMPLETED.value:
+                response_data["result"] = {
+                    "output_path": output_path,
+                    "output_url": f"/output/{os.path.basename(output_path)}",
+                    "audio_format": audio_format,
+                    "sample_rate": sample_rate,
+                    "text_content": text_content,
+                    "language_id": language_id
+                }
+            elif status == TaskStatus.FAILED.value:
+                response_data["error_msg"] = error_msg
+            elif status in [TaskStatus.PENDING.value, TaskStatus.PROCESSING.value]:
+                response_data["code"] = 1
+                response_data["msg"] = "任务尚未完成"
+            
+            task_result_map[task_id] = response_data
+        
+        # 为未找到的任务添加错误信息
+        for task_id in task_list:
+            if task_id not in task_result_map:
+                task_result_map[task_id] = {
+                    "code": 1,
+                    "task_id": task_id,
+                    "msg": "任务不存在"
+                }
+        
+        return {
+            "code": 0,
+            "msg": "批量查询任务结果完成",
+            "results": list(task_result_map.values())
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"批量查询任务结果失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get_tts_by_biz_id")
+async def get_tts_by_biz_id(
+    biz_unique_id: Optional[str] = Query(None, description="业务唯一ID"),
+    app_id: Optional[str] = Query(None, description="应用ID")
+):
+    """根据业务ID查询TTS任务"""
+    try:
+        if not biz_unique_id and not app_id:
+            raise HTTPException(status_code=400, detail="必须提供biz_unique_id或app_id")
+        
+        # 构建查询条件
+        conditions = []
+        params = []
+        
+        if biz_unique_id:
+            conditions.append("biz_unique_id = ?")
+            params.append(biz_unique_id)
+        if app_id:
+            conditions.append("app_id = ?")
+            params.append(app_id)
+        
+        where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+        
+        task = await db_pool.fetchone(
+            f"SELECT * FROM tts_tasks {where_clause} ORDER BY created_time DESC LIMIT 1",
+            params
+        )
+        
+        if not task:
+            raise HTTPException(status_code=404, detail="任务不存在")
+        
+        return {
+            "code": 0,
+            "msg": "查询任务详情成功",
+            "task": {
+                "task_id": task["task_id"],
+                "text_content": task["text_content"],
+                "language_id": task["language_id"],
+                "status": task["status"],
+                "progress": task["progress"],
+                "created_time": task["created_time"],
+                "updated_time": task["updated_time"],
+                "callback_status": task["callback_status"],
+                "output_path": task["output_path"],
+                "output_url": f"/output/{os.path.basename(task['output_path'])}" if task["output_path"] else None
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"根据业务ID查询任务失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/cancel_tts_task")

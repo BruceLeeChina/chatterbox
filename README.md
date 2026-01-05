@@ -21,6 +21,25 @@ docker run -p 8001:8001 chatterbox-tts
 # 或使用 Compose
 docker-compose -f docker-compose.tts.yml up
 
+
+CPU切换GPU:
+# pip uninstall torch torchvision torchaudio
+# pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu129
+# pip install xformers --index-url https://download.pytorch.org/whl/cu129
+
+# 卸载CPU版本
+pip uninstall torch torchaudio -y
+# 使用清华镜像安装 CUDA 版本
+pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+pip install xformers --index-url https://download.pytorch.org/whl/cu124
+
+# 启动服务
+python server.py --host 0.0.0.0 --port 8001 --device cuda
+
+# 如果遇到xformers兼容性问题，可使用以下命令禁用xformers运行（性能会有所下降）
+# XFORMERS_DISABLE=1 python server.py --host 0.0.0.0 --port 8001 --device cuda
+
+
 ===================================================================================================================================================================================
 ![Chatterbox Turbo Image](./Chatterbox-Turbo.jpg)
 
@@ -192,3 +211,12 @@ If you find this model useful, please consider citing.
 ```
 ## Disclaimer
 Don't use this model to do bad things. Prompts are sourced from freely available data on the internet.
+
+
+==============================================参考ASR http实现TTS==========================================================================
+待修改的TTS界面和python后端服务代码：  参考项目：asr-offline 文件夹下  我有一个asr的示例项目：
+包括 单任务提交（一段文本）、任务管理、批量操作（一次提交多段文本；查询多个结果）、任务列表（所有任务，
+可以支持条件查询）；任务提交后支持回调地址callback_url,也支持主动查询；主要的界面参考asr项目，不同
+点是asr支持传递url/上传文本，tts只有文字；asr返回文本，tts合成后提供下载文件。参考asr,帮我修改和实现 
+tts,dockerfile / docker-compose.yml/tts_api_doc.md也要帮我生成
+

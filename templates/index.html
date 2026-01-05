@@ -5,116 +5,571 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatterbox TTS - 多语言语音合成服务</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 1400px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
         }
-        
+
         .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .header h1 {
-            color: #2c3e50;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .header p {
-            color: #7f8c8d;
-            font-size: 1.2em;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-        
-        .form-section {
-            background: #f8f9fa;
-            padding: 30px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            padding: 25px 35px;
             border-radius: 15px;
-            border: 2px solid #e9ecef;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.2);
+            position: relative;
+            overflow: hidden;
         }
-        
-        .section-title {
-            color: #2c3e50;
-            font-size: 1.4em;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
         }
-        
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .header p {
+            margin: 8px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+            font-weight: 300;
+            position: relative;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 18px 25px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tab-button:hover {
+            background-color: #f8f9fa;
+            color: #4CAF50;
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            color: #4CAF50;
+            border-bottom-color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.05);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #2E7D32;
+            margin-top: 0;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e8f5e9;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
-        
+
         .form-group label {
             display: block;
-            color: #2c3e50;
+            margin-bottom: 10px;
             font-weight: 600;
-            margin-bottom: 8px;
+            color: #444;
+            font-size: 15px;
         }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
+
+        .form-group .sub-label {
+            font-size: 13px;
+            color: #777;
+            margin-top: 5px;
+            font-weight: 400;
+        }
+
+        input[type="file"], input[type="text"], input[type="url"], input[type="number"], textarea, select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background: #fafafa;
         }
-        
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
+
+        input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            border-color: #4CAF50;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
         }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 120px;
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
         }
-        
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 120px;
+        }
+
+        button i {
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            border-left: 5px solid #4CAF50;
+            max-height: 500px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-title {
+            font-weight: 700;
+            color: #2E7D32;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        pre {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Consolas', 'Monaco', monospace;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 5px;
+            gap: 5px;
+        }
+
+        .status-pending { 
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); 
+            color: #856404; 
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-processing { 
+            background: linear-gradient(135deg, #cce5ff 0%, #b3d7ff 100%); 
+            color: #004085; 
+            border: 1px solid #b3d7ff;
+        }
+
+        .status-completed { 
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-failed { 
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); 
+            color: #721c24; 
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-canceled { 
+            background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%); 
+            color: #383d41; 
+            border: 1px solid #d6d8db;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            margin-top: 20px; 
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); 
+        }
+
+        th { 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            padding: 18px 20px; 
+            text-align: left; 
+            font-weight: 700; 
+            color: #444; 
+            border-bottom: 2px solid #e0e0e0; 
+        }
+
+        td { 
+            padding: 16px 20px; 
+            border-bottom: 1px solid #f0f0f0; 
+        }
+
+        tr:hover { 
+            background-color: rgba(76, 175, 80, 0.03); 
+        }
+
+        .task-id { 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            font-size: 13px; 
+            color: #666; 
+            background: #f8f9fa; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            border: 1px solid #e0e0e0; 
+        }
+
+        .file-list-container { 
+            max-height: 450px; 
+            overflow-y: auto; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 10px; 
+            padding: 20px; 
+            background: #fafafa; 
+        }
+
+        .file-list-item { 
+            background: white; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            border-radius: 10px; 
+            border: 1px solid #e0e0e0; 
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); 
+            transition: transform 0.2s ease, box-shadow 0.2s ease; 
+        }
+
+        .file-list-item:hover { 
+            transform: translateX(5px); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+        }
+
+        .footer { 
+            margin-top: 40px; 
+            text-align: center; 
+            color: #666; 
+            font-size: 14px; 
+            padding: 25px; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); 
+        }
+
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); 
+        }
+
+        .stat-item { 
+            text-align: center; 
+            padding: 20px; 
+            border-radius: 12px; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            transition: transform 0.3s ease; 
+        }
+
+        .stat-item:hover { 
+            transform: translateY(-5px); 
+        }
+
+        .stat-value { 
+            font-size: 36px; 
+            font-weight: 800; 
+            color: #4CAF50; 
+            margin-bottom: 8px; 
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+        }
+
+        .stat-label { 
+            font-size: 15px; 
+            color: #666; 
+            font-weight: 500; 
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .panel {
+                padding: 20px;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(76, 175, 80, 0.1);
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .json-viewer {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background: white;
+            border-color: #4CAF50;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin: 15px 0;
+        }
+
         .slider-group {
             margin: 20px 0;
         }
-        
+
         .slider-container {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        
+
         .slider {
             flex: 1;
             height: 6px;
@@ -123,367 +578,508 @@
             outline: none;
             -webkit-appearance: none;
         }
-        
+
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #3498db;
+            background: #4CAF50;
             cursor: pointer;
         }
-        
+
         .slider::-moz-range-thumb {
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #3498db;
+            background: #4CAF50;
             cursor: pointer;
             border: none;
         }
-        
+
         .slider-value {
             min-width: 60px;
             text-align: center;
             font-weight: 600;
-            color: #3498db;
-        }
-        
-        .btn {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 20px;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
-        }
-        
-        .btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .status-section {
-            background: #e8f5e8;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 2px solid #27ae60;
-        }
-        
-        .audio-player {
-            width: 100%;
-            margin-top: 15px;
-        }
-        
-        .language-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-        }
-        
-        .language-item {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            font-size: 14px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .language-item:hover {
-            background: #3498db;
-            color: white;
-        }
-        
-        .language-item.selected {
-            background: #2980b9;
-            color: white;
-        }
-        
-        .api-section {
-            margin-top: 40px;
-            padding: 30px;
-            background: #f8f9fa;
-            border-radius: 15px;
-        }
-        
-        .api-title {
-            color: #2c3e50;
-            font-size: 1.6em;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .api-list {
-            list-style: none;
-        }
-        
-        .api-item {
-            background: white;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .api-item strong {
-            color: #2c3e50;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            color: #3498db;
-            font-weight: 600;
-        }
-        
-        .error {
-            color: #e74c3c;
-            background: #fdf2f2;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 2px solid #e74c3c;
-        }
-        
-        .success {
-            color: #27ae60;
-            background: #f2fdf2;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 2px solid #27ae60;
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .container {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
+            color: #4CAF50;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎤 Chatterbox TTS</h1>
-            <p>多语言语音合成服务 - 支持23种语言的自然语音生成</p>
+    <div class="header">
+        <h1><i class="fas fa-microphone-alt"></i> Chatterbox TTS</h1>
+        <p>多语言语音合成服务 - 支持23种语言的自然语音生成</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="totalTasks">0</div>
+            <div class="stat-label">总任务数</div>
         </div>
-        
-        <div class="main-content">
-            <div class="form-section">
-                <h2 class="section-title">📝 文本输入</h2>
-                
+        <div class="stat-item">
+            <div class="stat-value" id="completedTasks">0</div>
+            <div class="stat-label">已完成</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="processingTasks">0</div>
+            <div class="stat-label">处理中</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="pendingTasks">0</div>
+            <div class="stat-label">待处理</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="failedTasks">0</div>
+            <div class="stat-label">失败任务</div>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="tab-button active" data-tab="singleTaskTab">
+            <i class="fas fa-paper-plane"></i> 单任务提交
+        </button>
+        <button class="tab-button" data-tab="taskManagementTab">
+            <i class="fas fa-tasks"></i> 任务管理
+        </button>
+        <button class="tab-button" data-tab="batchOperationTab">
+            <i class="fas fa-layer-group"></i> 批量操作
+        </button>
+        <button class="tab-button" data-tab="taskListTab">
+            <i class="fas fa-list-alt"></i> 任务列表
+        </button>
+    </div>
+
+    <!-- 单任务提交标签页 -->
+    <div id="singleTaskTab" class="tab-content active">
+        <div class="container">
+            <div class="panel">
+                <h2><i class="fas fa-paper-plane"></i> 单任务提交</h2>
+
                 <div class="form-group">
-                    <label for="text">要合成的文本内容</label>
-                    <textarea id="text" placeholder="请输入要转换为语音的文本内容...">上个月，我们达到了一个新的里程碑。我们的YouTube频道观看次数达到了二十亿次，这绝对令人难以置信。</textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="language">选择语言</label>
-                    <select id="language">
-                        <option value="zh">中文 (Chinese)</option>
-                        <option value="en">英语 (English)</option>
-                        <option value="es">西班牙语 (Spanish)</option>
-                        <option value="fr">法语 (French)</option>
-                        <option value="de">德语 (German)</option>
-                        <option value="it">意大利语 (Italian)</option>
-                        <option value="pt">葡萄牙语 (Portuguese)</option>
-                        <option value="ja">日语 (Japanese)</option>
-                        <option value="ko">韩语 (Korean)</option>
-                        <option value="hi">印地语 (Hindi)</option>
-                        <option value="ar">阿拉伯语 (Arabic)</option>
-                        <option value="ru">俄语 (Russian)</option>
-                        <option value="tr">土耳其语 (Turkish)</option>
-                        <option value="nl">荷兰语 (Dutch)</option>
-                        <option value="sv">瑞典语 (Swedish)</option>
-                        <option value="da">丹麦语 (Danish)</option>
-                        <option value="no">挪威语 (Norwegian)</option>
-                        <option value="fi">芬兰语 (Finnish)</option>
-                        <option value="pl">波兰语 (Polish)</option>
-                        <option value="el">希腊语 (Greek)</option>
-                        <option value="he">希伯来语 (Hebrew)</option>
-                        <option value="ms">马来语 (Malay)</option>
-                        <option value="sw">斯瓦希里语 (Swahili)</option>
-                    </select>
-                </div>
-                
-                <div class="slider-group">
-                    <label>语音表达度控制</label>
-                    <div class="slider-container">
-                        <input type="range" class="slider" id="exaggeration" min="0.25" max="2.0" step="0.05" value="0.5">
-                        <span class="slider-value" id="exaggerationValue">0.5</span>
-                    </div>
-                    <small>控制语音的表达力和情感 (0.25-2.0，0.5为中性)</small>
-                </div>
-                
-                <div class="slider-group">
-                    <label>生成随机性控制</label>
-                    <div class="slider-container">
-                        <input type="range" class="slider" id="temperature" min="0.05" max="5.0" step="0.05" value="0.8">
-                        <span class="slider-value" id="temperatureValue">0.8</span>
-                    </div>
-                    <small>控制生成的随机性 (0.05-5.0，数值越高越随机)</small>
-                </div>
-                
-                <div class="slider-group">
-                    <label>CFG权重控制</label>
-                    <div class="slider-container">
-                        <input type="range" class="slider" id="cfgWeight" min="0.2" max="1.0" step="0.05" value="0.5">
-                        <span class="slider-value" id="cfgWeightValue">0.5</span>
-                    </div>
-                    <small>控制生成引导强度 (0.2-1.0，0为语言转换)</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="seed">随机种子 (可选)</label>
-                    <input type="number" id="seed" value="0" min="0" placeholder="0为随机生成">
-                </div>
-                
-                <div class="form-group">
-                    <label for="predefinedAudio">选择参考音频 (可选)</label>
-                    <select id="predefinedAudio">
-                        <option value="">不使用参考音频</option>
-                    </select>
-                    <small>从预定义音频中选择作为参考音频，如 meeting_recording.wav</small>
-                </div>
-                
-                <button class="btn" onclick="generateTTS()">🎵 生成语音</button>
-                
-                <div class="loading" id="loading">
-                    <p>⏳ 正在生成语音，请稍候...</p>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h2 class="section-title">🎧 音频输出</h2>
-                
-                <div class="status-section" id="statusSection" style="display: none;">
-                    <h3>任务状态</h3>
-                    <p id="taskStatus">准备就绪</p>
-                    <div id="taskProgress" style="display: none;">
-                        <div style="background: #e9ecef; border-radius: 10px; overflow: hidden; margin-top: 10px;">
-                            <div id="progressBar" style="background: #27ae60; height: 20px; width: 0%; transition: width 0.3s ease;"></div>
-                        </div>
-                        <p id="progressText">0%</p>
-                    </div>
-                </div>
-                
-                <div id="audioSection" style="display: none;">
-                    <h3>🎵 生成的音频</h3>
-                    <audio class="audio-player" id="audioPlayer" controls>
-                        您的浏览器不支持音频播放。
-                    </audio>
-                    <div class="form-group" style="margin-top: 15px;">
-                        <button class="btn" onclick="downloadAudio()">📥 下载音频</button>
-                    </div>
-                </div>
-                
-                <div id="errorSection" style="display: none;">
-                    <h3>❌ 错误信息</h3>
-                    <div class="error" id="errorMessage"></div>
-                </div>
-                
-                <div id="apiSection">
-                    <h3>📡 任务管理</h3>
                     <div class="form-group">
-                        <label for="taskId">任务ID</label>
-                        <input type="text" id="taskId" placeholder="输入任务ID查询状态">
-                        <button class="btn" onclick="checkTaskStatus()" style="margin-top: 10px;">🔍 查询状态</button>
-                        <button class="btn" onclick="getTaskResult()" style="margin-top: 10px; background: linear-gradient(45deg, #e67e22, #d35400);">📋 获取结果</button>
+                        <label for="text"><i class="fas fa-font"></i> 要合成的文本内容</label>
+                        <textarea id="text" placeholder="请输入要转换为语音的文本内容..." rows="5">上个月，我们达到了一个新的里程碑。我们的YouTube频道观看次数达到了二十亿次，这绝对令人难以置信。</textarea>
+                        <div class="sub-label">支持23种语言，最大文本长度为300个字符</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language"><i class="fas fa-language"></i> 选择语言</label>
+                        <select id="language">
+                            <option value="zh">中文 (Chinese)</option>
+                            <option value="en">英语 (English)</option>
+                            <option value="es">西班牙语 (Spanish)</option>
+                            <option value="fr">法语 (French)</option>
+                            <option value="de">德语 (German)</option>
+                            <option value="it">意大利语 (Italian)</option>
+                            <option value="pt">葡萄牙语 (Portuguese)</option>
+                            <option value="ja">日语 (Japanese)</option>
+                            <option value="ko">韩语 (Korean)</option>
+                            <option value="hi">印地语 (Hindi)</option>
+                            <option value="ar">阿拉伯语 (Arabic)</option>
+                            <option value="ru">俄语 (Russian)</option>
+                            <option value="tr">土耳其语 (Turkish)</option>
+                            <option value="nl">荷兰语 (Dutch)</option>
+                            <option value="sv">瑞典语 (Swedish)</option>
+                            <option value="da">丹麦语 (Danish)</option>
+                            <option value="no">挪威语 (Norwegian)</option>
+                            <option value="fi">芬兰语 (Finnish)</option>
+                            <option value="pl">波兰语 (Polish)</option>
+                            <option value="el">希腊语 (Greek)</option>
+                            <option value="he">希伯来语 (Hebrew)</option>
+                            <option value="ms">马来语 (Malay)</option>
+                            <option value="sw">斯瓦希里语 (Swahili)</option>
+                        </select>
+                    </div>
+
+                    <div class="slider-group">
+                        <label>语音表达度控制</label>
+                        <div class="slider-container">
+                            <input type="range" class="slider" id="exaggeration" min="0.25" max="2.0" step="0.05" value="0.5">
+                            <span class="slider-value" id="exaggerationValue">0.5</span>
+                        </div>
+                        <small>控制语音的表达力和情感 (0.25-2.0，0.5为中性)</small>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>生成随机性控制</label>
+                        <div class="slider-container">
+                            <input type="range" class="slider" id="temperature" min="0.05" max="5.0" step="0.05" value="0.8">
+                            <span class="slider-value" id="temperatureValue">0.8</span>
+                        </div>
+                        <small>控制生成的随机性 (0.05-5.0，数值越高越随机)</small>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>CFG权重控制</label>
+                        <div class="slider-container">
+                            <input type="range" class="slider" id="cfgWeight" min="0.2" max="1.0" step="0.05" value="0.5">
+                            <span class="slider-value" id="cfgWeightValue">0.5</span>
+                        </div>
+                        <small>控制生成引导强度 (0.2-1.0，0为语言转换)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="seed"><i class="fas fa-random"></i> 随机种子 (可选)</label>
+                        <input type="number" id="seed" value="0" min="0" placeholder="0为随机生成">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="predefinedAudio"><i class="fas fa-music"></i> 选择参考音频 (可选)</label>
+                        <select id="predefinedAudio">
+                            <option value="">不使用参考音频</option>
+                        </select>
+                        <small>从预定义音频中选择作为参考音频</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-cogs"></i> 可选参数</label>
+                        <div class="input-grid">
+                            <div>
+                                <label for="callbackUrl"><i class="fas fa-bell"></i> 回调URL</label>
+                                <input type="url" id="callbackUrl" placeholder="https://example.com/callback">
+                            </div>
+                            <div>
+                                <label for="appId"><i class="fas fa-id-card"></i> 应用ID</label>
+                                <input type="text" id="appId" placeholder="如: my_app">
+                            </div>
+                            <div>
+                                <label for="bizType"><i class="fas fa-tag"></i> 业务类型</label>
+                                <input type="text" id="bizType" placeholder="如: speech_synthesis">
+                            </div>
+                            <div>
+                                <label for="bizUniqueId"><i class="fas fa-fingerprint"></i> 业务唯一ID</label>
+                                <input type="text" id="bizUniqueId" placeholder="如: request_001">
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="api-section">
-            <h2 class="api-title">🌐 API 接口文档</h2>
-            <div class="api-list">
-                <div class="api-item">
-                    <strong>POST /submit_tts_task</strong> - 提交TTS任务
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="generateTTS()">
+                        <i class="fas fa-paper-plane"></i> 提交任务
+                    </button>
+                    <button class="btn-secondary" onclick="clearSingleTaskForm()">
+                        <i class="fas fa-redo"></i> 清空表单
+                    </button>
                 </div>
-                <div class="api-item">
-                    <strong>GET /get_tts_status</strong> - 查询任务状态
-                </div>
-                <div class="api-item">
-                    <strong>GET /get_tts_result</strong> - 获取任务结果
-                </div>
-                <div class="api-item">
-                    <strong>GET /download_tts_audio</strong> - 下载音频文件
-                </div>
-                <div class="api-item">
-                    <strong>GET /list_tts_tasks</strong> - 获取任务列表
-                </div>
-                <div class="api-item">
-                    <strong>GET /supported_languages</strong> - 获取支持的语言
+
+                <div class="result" id="singleTaskResult">
+                    <div class="result-title"><i class="fas fa-clipboard-check"></i> 提交结果</div>
+                    <div id="singleTaskResultContent" style="min-height: 100px;">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">提交任务后，结果将显示在这里</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 任务管理标签页 -->
+    <div id="taskManagementTab" class="tab-content">
+        <div class="container">
+            <div class="panel">
+                <h2><i class="fas fa-tasks"></i> 任务管理</h2>
+
+                <div class="form-group">
+                    <label for="taskId"><i class="fas fa-key"></i> 任务ID</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="taskId" placeholder="输入任务ID进行管理" style="flex: 1;">
+                        <button class="btn-secondary" onclick="pasteFromClipboard('taskId')">
+                            <i class="fas fa-paste"></i> 粘贴
+                        </button>
+                    </div>
+                    <div class="sub-label">您可以在提交任务后获取到任务ID，或从任务列表中复制</div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="getTaskStatus()">
+                        <i class="fas fa-search"></i> 查询状态
+                    </button>
+                    <button class="btn-secondary" onclick="getTaskResult()">
+                        <i class="fas fa-file-alt"></i> 查询结果
+                    </button>
+                    <button class="btn-warning" onclick="cancelTask()">
+                        <i class="fas fa-ban"></i> 取消任务
+                    </button>
+                    <button class="btn-danger" onclick="deleteTask()">
+                        <i class="fas fa-trash"></i> 删除任务
+                    </button>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 2px solid #f0f0f0; padding-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAdvancedQuery()">
+                        <h3 style="color: #4CAF50; margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-search-plus"></i> 高级查询
+                        </h3>
+                        <i class="fas fa-chevron-down" id="advancedQueryToggleIcon"></i>
+                    </div>
+
+                    <div id="advancedQueryContent" style="display: none; margin-top: 20px;">
+                        <div class="input-grid">
+                            <div>
+                                <label for="advancedBizUniqueId"><i class="fas fa-fingerprint"></i> 业务唯一ID</label>
+                                <input type="text" id="advancedBizUniqueId" placeholder="输入业务唯一ID">
+                            </div>
+                            <div>
+                                <label for="advancedAppId"><i class="fas fa-filter"></i> 应用ID</label>
+                                <input type="text" id="advancedAppId" placeholder="输入应用ID">
+                            </div>
+                            <div>
+                                <label for="advancedBizType"><i class="fas fa-tags"></i> 业务类型</label>
+                                <input type="text" id="advancedBizType" placeholder="输入业务类型">
+                            </div>
+                        </div>
+
+                        <div class="button-group" style="margin-top: 20px;">
+                            <button class="btn-primary" onclick="advancedSearch()">
+                                <i class="fas fa-search"></i> 执行高级查询
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result" id="taskManagementResult" style="margin-top: 40px;">
+                    <div class="result-title"><i class="fas fa-info-circle"></i> 任务信息</div>
+                    <div id="taskManagementResultContent" style="min-height: 100px;">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">查询任务后，详细信息将显示在这里</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量操作标签页 -->
+    <div id="batchOperationTab" class="tab-content">
+        <div class="container">
+            <div class="panel">
+                <h2><i class="fas fa-layer-group"></i> 批量操作</h2>
+
+                <div class="form-group">
+                    <h3 style="color: #4CAF50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-file-import"></i> 批量提交任务
+                    </h3>
+                    
+                    <label>添加文本列表（最多50个）</label>
+
+                    <div class="file-list-container">
+                        <div id="batchTextList">
+                            <div class="file-list-item" data-index="0">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <div>
+                                        <label>文本内容 *</label>
+                                        <textarea class="batch-text-content" placeholder="请输入要合成的文本内容" rows="3" required>测试文本内容</textarea>
+                                    </div>
+                                    <div>
+                                        <label>语言代码 *</label>
+                                        <select class="batch-language-id">
+                                            <option value="zh">中文</option>
+                                            <option value="en">英语</option>
+                                            <option value="es">西班牙语</option>
+                                            <option value="fr">法语</option>
+                                            <option value="de">德语</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label>应用ID（可选）</label>
+                                        <input type="text" class="batch-app-id" placeholder="如: my_app">
+                                    </div>
+                                    <div>
+                                        <label>业务类型（可选）</label>
+                                        <input type="text" class="batch-biz-type" placeholder="如: speech_synthesis">
+                                    </div>
+                                    <div>
+                                        <label>业务唯一ID（可选）</label>
+                                        <input type="text" class="batch-biz-unique-id" placeholder="如: batch_001">
+                                    </div>
+                                    <div>
+                                        <label>回调URL（可选）</label>
+                                        <input type="url" class="batch-callback-url" placeholder="https://example.com/callback">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 15px; text-align: right;">
+                                    <button class="btn-danger" onclick="removeBatchRow(this)" style="padding: 8px 15px;">
+                                        <i class="fas fa-trash"></i> 删除此行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group" style="margin-top: 20px;">
+                        <button class="btn-primary" onclick="addBatchRow()">
+                            <i class="fas fa-plus"></i> 添加一行
+                        </button>
+                        <button class="btn-success" onclick="batchSubmit()">
+                            <i class="fas fa-paper-plane"></i> 批量提交
+                        </button>
+                        <button class="btn-secondary" onclick="clearBatchForm()">
+                            <i class="fas fa-redo"></i> 清空列表
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 40px;">
+                    <h3 style="color: #4CAF50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-list-alt"></i> 批量查询结果
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label for="batchTaskIds"><i class="fas fa-tags"></i> 任务ID列表（逗号分隔）</label>
+                        <textarea id="batchTaskIds" rows="4" placeholder="请输入多个任务ID，用逗号分隔，例如：
+task_001, task_002, task_003
+最多可同时处理100个任务ID，建议先使用任务列表功能复制任务ID"></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="batchGetStatus()">
+                            <i class="fas fa-search"></i> 批量查询状态
+                        </button>
+                        <button class="btn-secondary" onclick="batchGetResult()">
+                            <i class="fas fa-file-alt"></i> 批量查询结果
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result" id="batchSubmitResult" style="margin-top: 30px;">
+                    <div class="result-title"><i class="fas fa-clipboard-list"></i> 批量操作结果</div>
+                    <div id="batchSubmitResultContent" style="min-height: 100px;">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">批量操作后，结果将显示在这里</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务列表标签页 -->
+    <div id="taskListTab" class="tab-content">
+        <div class="container">
+            <div class="panel">
+                <h2><i class="fas fa-list-alt"></i> 任务列表</h2>
+
+                <div class="form-group">
+                    <label><i class="fas fa-filter"></i> 筛选条件</label>
+                    <div class="input-grid">
+                        <div>
+                            <label for="listPage"><i class="fas fa-page-numbers"></i> 页码</label>
+                            <input type="number" id="listPage" value="1" min="1">
+                        </div>
+                        <div>
+                            <label for="listPageSize"><i class="fas fa-list-ol"></i> 每页数量</label>
+                            <select id="listPageSize">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="listStatus"><i class="fas fa-status"></i> 任务状态</label>
+                            <select id="listStatus">
+                                <option value="">全部</option>
+                                <option value="pending">待处理</option>
+                                <option value="processing">处理中</option>
+                                <option value="completed">已完成</option>
+                                <option value="failed">失败</option>
+                                <option value="canceled">已取消</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="refreshTaskList()">
+                        <i class="fas fa-sync-alt"></i> 刷新列表
+                    </button>
+                    <button class="btn-secondary" onclick="exportTaskList()">
+                        <i class="fas fa-file-export"></i> 导出列表
+                    </button>
+                </div>
+
+                <div class="result" style="margin-top: 30px;">
+                    <div class="result-title"><i class="fas fa-table"></i> 任务列表</div>
+                    <div id="taskListContent" style="min-height: 100px;">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">点击刷新按钮加载任务列表</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2026 Chatterbox TTS - 多语言语音合成服务</p>
+        <p>基于AI技术的自然语音生成，支持23种语言</p>
+    </div>
+
     <script>
-        let currentTaskId = null;
-        let currentAudioUrl = null;
-        
-        // 更新滑块值显示
-        document.getElementById('exaggeration').addEventListener('input', function() {
-            document.getElementById('exaggerationValue').textContent = this.value;
-        });
-        
-        document.getElementById('temperature').addEventListener('input', function() {
-            document.getElementById('temperatureValue').textContent = this.value;
-        });
-        
-        document.getElementById('cfgWeight').addEventListener('input', function() {
-            document.getElementById('cfgWeightValue').textContent = this.value;
-        });
-        
-        // 页面加载完成后的初始化
+        // 标签页切换功能
         document.addEventListener('DOMContentLoaded', function() {
-            // 加载支持的语言列表
-            fetch('/supported_languages')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.code === 0) {
-                        console.log('支持的语言:', data.languages);
-                    }
-                })
-                .catch(error => {
-                    console.warn('获取语言列表失败:', error);
-                });
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
             
-            // 加载预定义音频列表
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.getAttribute('data-tab');
+                    
+                    // 更新按钮状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // 更新内容显示
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === targetTab) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // 初始化滑块显示
+            const exaggerationSlider = document.getElementById('exaggeration');
+            const temperatureSlider = document.getElementById('temperature');
+            const cfgWeightSlider = document.getElementById('cfgWeight');
+            
+            if (exaggerationSlider) {
+                exaggerationSlider.addEventListener('input', function() {
+                    document.getElementById('exaggerationValue').textContent = this.value;
+                });
+            }
+            
+            if (temperatureSlider) {
+                temperatureSlider.addEventListener('input', function() {
+                    document.getElementById('temperatureValue').textContent = this.value;
+                });
+            }
+            
+            if (cfgWeightSlider) {
+                cfgWeightSlider.addEventListener('input', function() {
+                    document.getElementById('cfgWeightValue').textContent = this.value;
+                });
+            }
+            
+            // 加载支持的语言列表
             loadPredefinedAudios();
+            
+            // 刷新统计数据
+            refreshStats();
         });
         
+        // 刷新统计数据
+        async function refreshStats() {
+            try {
+                const response = await fetch('/list_tts_tasks?page=1&page_size=1');
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    document.getElementById('totalTasks').textContent = result.total;
+                }
+            } catch (error) {
+                console.warn('获取统计数据失败:', error);
+            }
+        }
+        
+        // 加载预定义音频列表
         async function loadPredefinedAudios() {
             try {
                 const response = await fetch('/list_predefined_audios');
@@ -505,6 +1101,7 @@
             }
         }
         
+        // 格式化文件大小
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -513,6 +1110,7 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
+        // 单任务提交
         async function generateTTS() {
             const text = document.getElementById('text').value.trim();
             const language = document.getElementById('language').value;
@@ -521,44 +1119,44 @@
             const cfgWeight = document.getElementById('cfgWeight').value;
             const seed = document.getElementById('seed').value;
             const predefinedAudio = document.getElementById('predefinedAudio').value;
+            const callbackUrl = document.getElementById('callbackUrl').value;
+            const appId = document.getElementById('appId').value;
+            const bizType = document.getElementById('bizType').value;
+            const bizUniqueId = document.getElementById('bizUniqueId').value;
             
             if (!text) {
                 alert('请输入要合成的文本内容');
                 return;
             }
             
-            // 重置UI
-            hideAllSections();
-            showLoading(true);
+            // 显示加载状态
+            const resultContent = document.getElementById('singleTaskResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在提交任务...</p></div>';
             
             try {
                 let response;
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('language_id', language);
+                formData.append('exaggeration', exaggeration);
+                formData.append('temperature', temperature);
+                formData.append('cfg_weight', cfgWeight);
+                formData.append('seed_num', seed);
+                
+                if (callbackUrl) formData.append('callback_url', callbackUrl);
+                if (appId) formData.append('app_id', appId);
+                if (bizType) formData.append('biz_type', bizType);
+                if (bizUniqueId) formData.append('biz_unique_id', bizUniqueId);
                 
                 if (predefinedAudio) {
                     // 使用预定义音频
-                    const formData = new FormData();
-                    formData.append('text', text);
-                    formData.append('language_id', language);
                     formData.append('predefined_audio_filename', predefinedAudio);
-                    formData.append('exaggeration', exaggeration);
-                    formData.append('temperature', temperature);
-                    formData.append('cfg_weight', cfgWeight);
-                    formData.append('seed_num', seed);
-                    
                     response = await fetch('/submit_tts_task_with_predefined_audio', {
                         method: 'POST',
                         body: formData
                     });
                 } else {
                     // 不使用预定义音频
-                    const formData = new FormData();
-                    formData.append('text', text);
-                    formData.append('language_id', language);
-                    formData.append('exaggeration', exaggeration);
-                    formData.append('temperature', temperature);
-                    formData.append('cfg_weight', cfgWeight);
-                    formData.append('seed_num', seed);
-                    
                     response = await fetch('/submit_tts_task', {
                         method: 'POST',
                         body: formData
@@ -568,70 +1166,112 @@
                 const result = await response.json();
                 
                 if (result.code === 0) {
-                    currentTaskId = result.task_id;
-                    document.getElementById('taskId').value = currentTaskId;
-                    showStatusSection('任务提交成功');
-                    pollTaskStatus(currentTaskId);
+                    resultContent.innerHTML = `
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>任务提交成功！</strong>
+                                <p>任务ID: <span class="task-id">${result.task_id}</span></p>
+                                <p>您可以使用该ID在任务管理或任务列表中查询任务状态和结果</p>
+                                <div style="margin-top: 15px;">
+                                    <button class="btn-primary" onclick="document.getElementById('taskId').value='${result.task_id}'; document.querySelector('[data-tab=taskManagementTab]').click();" style="margin-right: 10px; padding: 8px 16px;">查看任务管理</button>
+                                    <button class="btn-secondary" onclick="copyToClipboard('${result.task_id}')" style="padding: 8px 16px;">复制任务ID</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 刷新统计数据
+                    refreshStats();
                 } else {
-                    throw new Error(result.msg || '任务提交失败');
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>任务提交失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
                 }
-                
             } catch (error) {
-                showError(error.message);
-            } finally {
-                showLoading(false);
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>任务提交失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
             }
         }
         
-        function pollTaskStatus(taskId) {
-            const interval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/get_tts_status?task_id=${taskId}`);
-                    const result = await response.json();
-                    
-                    if (result.code === 0) {
-                        showTaskProgress(result.progress);
-                        
-                        if (result.status === 'completed') {
-                            clearInterval(interval);
-                            showStatusSection('任务完成');
-                            showAudioSection(result.task_id);
-                        } else if (result.status === 'failed') {
-                            clearInterval(interval);
-                            showError('任务处理失败: ' + (result.error_msg || '未知错误'));
-                        } else if (result.status === 'canceled') {
-                            clearInterval(interval);
-                            showError('任务已取消');
-                        }
-                    } else {
-                        clearInterval(interval);
-                        throw new Error('查询任务状态失败');
-                    }
-                } catch (error) {
-                    clearInterval(interval);
-                    showError('查询任务状态时出错: ' + error.message);
-                }
-            }, 2000);
+        // 清空单任务表单
+        function clearSingleTaskForm() {
+            document.getElementById('text').value = '上个月，我们达到了一个新的里程碑。我们的YouTube频道观看次数达到了二十亿次，这绝对令人难以置信。';
+            document.getElementById('language').value = 'zh';
+            document.getElementById('exaggeration').value = '0.5';
+            document.getElementById('exaggerationValue').textContent = '0.5';
+            document.getElementById('temperature').value = '0.8';
+            document.getElementById('temperatureValue').textContent = '0.8';
+            document.getElementById('cfgWeight').value = '0.5';
+            document.getElementById('cfgWeightValue').textContent = '0.5';
+            document.getElementById('seed').value = '0';
+            document.getElementById('predefinedAudio').value = '';
+            document.getElementById('callbackUrl').value = '';
+            document.getElementById('appId').value = '';
+            document.getElementById('bizType').value = '';
+            document.getElementById('bizUniqueId').value = '';
         }
         
-        async function checkTaskStatus() {
+        // 任务管理功能
+        async function getTaskStatus() {
             const taskId = document.getElementById('taskId').value.trim();
             if (!taskId) {
                 alert('请输入任务ID');
                 return;
             }
             
+            const resultContent = document.getElementById('taskManagementResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在查询任务状态...</p></div>';
+            
             try {
                 const response = await fetch(`/get_tts_status?task_id=${taskId}`);
                 const result = await response.json();
                 
                 if (result.code === 0) {
-                    showStatusSection(`任务状态: ${result.status}, 进度: ${Math.round(result.progress * 100)}%`);
+                    resultContent.innerHTML = `
+                        <div class="json-viewer">
+                            <h4 style="margin-top: 0; color: #4CAF50;">任务状态信息</h4>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                            <div style="margin-top: 15px;">
+                                <button class="btn-primary" onclick="getTaskResult()" style="margin-right: 10px; padding: 8px 16px;">查询结果</button>
+                                <button class="btn-secondary" onclick="copyToClipboard('${JSON.stringify(result, null, 2)}')" style="padding: 8px 16px;">复制</button>
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    throw new Error('查询任务状态失败');
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>查询失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
                 }
             } catch (error) {
-                showError('查询任务状态时出错: ' + error.message);
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>查询失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
             }
         }
         
@@ -642,64 +1282,703 @@
                 return;
             }
             
+            const resultContent = document.getElementById('taskManagementResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在查询任务结果...</p></div>';
+            
             try {
                 const response = await fetch(`/get_tts_result?task_id=${taskId}`);
                 const result = await response.json();
                 
                 if (result.code === 0) {
+                    let resultHtml = `<div class="json-viewer">
+                        <h4 style="margin-top: 0; color: #4CAF50;">任务结果信息</h4>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>`;
+                    
                     if (result.status === 'completed' && result.result) {
-                        showAudioSection(taskId);
-                    } else if (result.status === 'failed') {
-                        showError('任务失败: ' + (result.error_msg || '未知错误'));
-                    } else {
-                        showStatusSection(`任务状态: ${result.status}`);
+                        resultHtml += `<div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">
+                            <h5 style="margin-top: 0; color: #2E7D32;">生成的音频</h5>
+                            <audio class="audio-player" controls src="/download_tts_audio?task_id=${taskId}">您的浏览器不支持音频播放。</audio>
+                            <div style="margin-top: 10px;">
+                                <button class="btn-primary" onclick="window.open('/download_tts_audio?task_id=${taskId}', '_blank')" style="padding: 8px 16px;">下载音频</button>
+                            </div>
+                        </div>`;
                     }
+                    
+                    resultHtml += `<div style="margin-top: 15px;">
+                        <button class="btn-secondary" onclick="copyToClipboard('${JSON.stringify(result, null, 2)}')" style="padding: 8px 16px;">复制结果</button>
+                    </div></div>`;
+                    
+                    resultContent.innerHTML = resultHtml;
                 } else {
-                    throw new Error('获取任务结果失败');
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>查询失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
                 }
             } catch (error) {
-                showError('获取任务结果时出错: ' + error.message);
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>查询失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
             }
         }
         
-        function showAudioSection(taskId) {
-            currentAudioUrl = `/download_tts_audio?task_id=${taskId}`;
-            document.getElementById('audioPlayer').src = currentAudioUrl;
-            document.getElementById('audioSection').style.display = 'block';
-        }
-        
-        function downloadAudio() {
-            if (currentAudioUrl) {
-                window.open(currentAudioUrl, '_blank');
+        async function cancelTask() {
+            const taskId = document.getElementById('taskId').value.trim();
+            if (!taskId) {
+                alert('请输入任务ID');
+                return;
+            }
+            
+            if (!confirm('确定要取消该任务吗？')) {
+                return;
+            }
+            
+            const resultContent = document.getElementById('taskManagementResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在取消任务...</p></div>';
+            
+            try {
+                const response = await fetch('/cancel_tts_task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ task_id: taskId })
+                });
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    resultContent.innerHTML = `
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>任务取消成功！</strong>
+                                <p>任务ID: <span class="task-id">${taskId}</span> 已取消</p>
+                            </div>
+                        </div>
+                    `;
+                    refreshStats();
+                } else {
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>取消任务失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>取消任务失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
             }
         }
         
-        function showStatusSection(message) {
-            document.getElementById('statusSection').style.display = 'block';
-            document.getElementById('taskStatus').textContent = message;
-            document.getElementById('taskProgress').style.display = 'block';
+        async function deleteTask() {
+            const taskId = document.getElementById('taskId').value.trim();
+            if (!taskId) {
+                alert('请输入任务ID');
+                return;
+            }
+            
+            if (!confirm('确定要删除该任务吗？此操作不可恢复！')) {
+                return;
+            }
+            
+            const resultContent = document.getElementById('taskManagementResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在删除任务...</p></div>';
+            
+            try {
+                const response = await fetch(`/delete_tts_task?task_id=${taskId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    resultContent.innerHTML = `
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>任务删除成功！</strong>
+                                <p>任务ID: <span class="task-id">${taskId}</span> 已删除</p>
+                            </div>
+                        </div>
+                    `;
+                    refreshStats();
+                } else {
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>删除任务失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>删除任务失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
         
-        function showTaskProgress(progress) {
-            const percentage = Math.round(progress * 100);
-            document.getElementById('progressBar').style.width = percentage + '%';
-            document.getElementById('progressText').textContent = percentage + '%';
+        // 高级查询功能
+        function toggleAdvancedQuery() {
+            const content = document.getElementById('advancedQueryContent');
+            const icon = document.getElementById('advancedQueryToggleIcon');
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                content.style.display = 'none';
+                icon.className = 'fas fa-chevron-down';
+            }
         }
         
-        function showError(message) {
-            document.getElementById('errorMessage').textContent = message;
-            document.getElementById('errorSection').style.display = 'block';
+        async function advancedSearch() {
+            const bizUniqueId = document.getElementById('advancedBizUniqueId').value;
+            const appId = document.getElementById('advancedAppId').value;
+            const bizType = document.getElementById('advancedBizType').value;
+            
+            if (!bizUniqueId && !appId) {
+                alert('至少需要提供业务唯一ID或应用ID');
+                return;
+            }
+            
+            const resultContent = document.getElementById('taskManagementResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在进行高级查询...</p></div>';
+            
+            try {
+                let params = new URLSearchParams();
+                if (bizUniqueId) params.append('biz_unique_id', bizUniqueId);
+                if (appId) params.append('app_id', appId);
+                if (bizType) params.append('biz_type', bizType);
+                
+                const response = await fetch(`/get_tts_by_biz_id?${params.toString()}`);
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    resultContent.innerHTML = `
+                        <div class="json-viewer">
+                            <h4 style="margin-top: 0; color: #4CAF50;">高级查询结果</h4>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                            <div style="margin-top: 15px;">
+                                <button class="btn-secondary" onclick="copyToClipboard('${JSON.stringify(result, null, 2)}')" style="padding: 8px 16px;">复制结果</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>查询失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>查询失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
         
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        // 批量操作功能
+        function addBatchRow() {
+            const batchList = document.getElementById('batchTextList');
+            const index = batchList.children.length;
+            
+            if (index >= 50) {
+                alert('最多只能添加50行');
+                return;
+            }
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'file-list-item';
+            newRow.dataset.index = index;
+            newRow.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <label>文本内容 *</label>
+                        <textarea class="batch-text-content" placeholder="请输入要合成的文本内容" rows="3" required>测试文本内容</textarea>
+                    </div>
+                    <div>
+                        <label>语言代码 *</label>
+                        <select class="batch-language-id">
+                            <option value="zh">中文</option>
+                            <option value="en">英语</option>
+                            <option value="es">西班牙语</option>
+                            <option value="fr">法语</option>
+                            <option value="de">德语</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>应用ID（可选）</label>
+                        <input type="text" class="batch-app-id" placeholder="如: my_app">
+                    </div>
+                    <div>
+                        <label>业务类型（可选）</label>
+                        <input type="text" class="batch-biz-type" placeholder="如: speech_synthesis">
+                    </div>
+                    <div>
+                        <label>业务唯一ID（可选）</label>
+                        <input type="text" class="batch-biz-unique-id" placeholder="如: batch_001">
+                    </div>
+                    <div>
+                        <label>回调URL（可选）</label>
+                        <input type="url" class="batch-callback-url" placeholder="https://example.com/callback">
+                    </div>
+                </div>
+                <div style="margin-top: 15px; text-align: right;">
+                    <button class="btn-danger" onclick="removeBatchRow(this)" style="padding: 8px 15px;">
+                        <i class="fas fa-trash"></i> 删除此行
+                    </button>
+                </div>
+            `;
+            
+            batchList.appendChild(newRow);
         }
         
-        function hideAllSections() {
-            document.getElementById('statusSection').style.display = 'none';
-            document.getElementById('audioSection').style.display = 'none';
-            document.getElementById('errorSection').style.display = 'none';
+        function removeBatchRow(button) {
+            const row = button.closest('.file-list-item');
+            if (row) {
+                row.remove();
+                // 更新剩余行的索引
+                updateBatchRowIndexes();
+            }
         }
+        
+        function updateBatchRowIndexes() {
+            const rows = document.querySelectorAll('.file-list-item');
+            rows.forEach((row, index) => {
+                row.dataset.index = index;
+            });
+        }
+        
+        function clearBatchForm() {
+            const batchList = document.getElementById('batchTextList');
+            // 保留第一行
+            while (batchList.children.length > 1) {
+                batchList.removeChild(batchList.lastChild);
+            }
+            // 清空第一行内容
+            const firstRow = batchList.querySelector('.file-list-item');
+            if (firstRow) {
+                const textarea = firstRow.querySelector('.batch-text-content');
+                const select = firstRow.querySelector('.batch-language-id');
+                const appIdInput = firstRow.querySelector('.batch-app-id');
+                const bizTypeInput = firstRow.querySelector('.batch-biz-type');
+                const bizUniqueIdInput = firstRow.querySelector('.batch-biz-unique-id');
+                const callbackUrlInput = firstRow.querySelector('.batch-callback-url');
+                
+                if (textarea) textarea.value = '测试文本内容';
+                if (select) select.value = 'zh';
+                if (appIdInput) appIdInput.value = '';
+                if (bizTypeInput) bizTypeInput.value = '';
+                if (bizUniqueIdInput) bizUniqueIdInput.value = '';
+                if (callbackUrlInput) callbackUrlInput.value = '';
+            }
+            // 清空批量查询输入框
+            document.getElementById('batchTaskIds').value = '';
+        }
+        
+        async function batchSubmit() {
+            const rows = document.querySelectorAll('.file-list-item');
+            const batchData = [];
+            
+            // 验证并收集数据
+            for (const row of rows) {
+                const textContent = row.querySelector('.batch-text-content').value.trim();
+                const languageId = row.querySelector('.batch-language-id').value;
+                const appId = row.querySelector('.batch-app-id').value;
+                const bizType = row.querySelector('.batch-biz-type').value;
+                const bizUniqueId = row.querySelector('.batch-biz-unique-id').value;
+                const callbackUrl = row.querySelector('.batch-callback-url').value;
+                
+                if (!textContent) {
+                    alert('请填写所有文本内容');
+                    return;
+                }
+                
+                batchData.push({
+                    text: textContent,
+                    language_id: languageId,
+                    app_id: appId,
+                    biz_type: bizType,
+                    biz_unique_id: bizUniqueId,
+                    callback_url: callbackUrl
+                });
+            }
+            
+            // 显示加载状态
+            const resultContent = document.getElementById('batchSubmitResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在批量提交任务...</p></div>';
+            
+            try {
+                // 这里使用单任务API模拟批量提交，实际项目中应使用专门的批量API
+                const results = [];
+                for (const item of batchData) {
+                    const formData = new FormData();
+                    formData.append('text', item.text);
+                    formData.append('language_id', item.language_id);
+                    if (item.app_id) formData.append('app_id', item.app_id);
+                    if (item.biz_type) formData.append('biz_type', item.biz_type);
+                    if (item.biz_unique_id) formData.append('biz_unique_id', item.biz_unique_id);
+                    if (item.callback_url) formData.append('callback_url', item.callback_url);
+                    
+                    const response = await fetch('/submit_tts_task', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    results.push(result);
+                }
+                
+                resultContent.innerHTML = `
+                    <div class="json-viewer">
+                        <h4 style="margin-top: 0; color: #4CAF50;">批量提交结果</h4>
+                        <pre>${JSON.stringify(results, null, 2)}</pre>
+                        <div style="margin-top: 15px;">
+                            <button class="btn-secondary" onclick="copyToClipboard('${JSON.stringify(results, null, 2).replace(/'/g, "\\'")}')" style="padding: 8px 16px;">复制结果</button>
+                        </div>
+                    </div>
+                `;
+                
+                refreshStats();
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>批量提交失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function batchGetStatus() {
+            const taskIdsText = document.getElementById('batchTaskIds').value.trim();
+            if (!taskIdsText) {
+                alert('请输入任务ID列表');
+                return;
+            }
+            
+            const taskIds = taskIdsText.split(',').map(id => id.trim()).filter(id => id);
+            if (taskIds.length === 0) {
+                alert('请输入有效的任务ID列表');
+                return;
+            }
+            
+            if (taskIds.length > 100) {
+                alert('最多只能查询100个任务ID');
+                return;
+            }
+            
+            const resultContent = document.getElementById('batchSubmitResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在批量查询状态...</p></div>';
+            
+            try {
+                // 使用单任务API模拟批量查询，实际项目中应使用专门的批量API
+                const results = [];
+                for (const taskId of taskIds) {
+                    const response = await fetch(`/get_tts_status?task_id=${taskId}`);
+                    const result = await response.json();
+                    results.push(result);
+                }
+                
+                resultContent.innerHTML = `
+                    <div class="json-viewer">
+                        <h4 style="margin-top: 0; color: #4CAF50;">批量状态查询结果</h4>
+                        <pre>${JSON.stringify(results, null, 2)}</pre>
+                        <div style="margin-top: 15px;">
+                            <button class="btn-secondary" onclick="copyToClipboard('${JSON.stringify(results, null, 2).replace(/'/g, "\\'")}')" style="padding: 8px 16px;">复制结果</button>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>批量查询失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function batchGetResult() {
+            const taskIdsText = document.getElementById('batchTaskIds').value.trim();
+            if (!taskIdsText) {
+                alert('请输入任务ID列表');
+                return;
+            }
+            
+            const taskIds = taskIdsText.split(',').map(id => id.trim()).filter(id => id);
+            if (taskIds.length === 0) {
+                alert('请输入有效的任务ID列表');
+                return;
+            }
+            
+            if (taskIds.length > 100) {
+                alert('最多只能查询100个任务ID');
+                return;
+            }
+            
+            const resultContent = document.getElementById('batchSubmitResultContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在批量查询结果...</p></div>';
+            
+            try {
+                // 使用单任务API模拟批量查询，实际项目中应使用专门的批量API
+                const results = [];
+                for (const taskId of taskIds) {
+                    const response = await fetch(`/get_tts_result?task_id=${taskId}`);
+                    const result = await response.json();
+                    results.push(result);
+                }
+                
+                resultContent.innerHTML = `
+                    <div class="json-viewer">
+                        <h4 style="margin-top: 0; color: #4CAF50;">批量结果查询结果</h4>
+                        <pre>${JSON.stringify(results, null, 2)}</pre>
+                        <div style="margin-top: 15px;">
+                            <button class="btn-secondary" onclick="copyToClipboard('${JSON.stringify(results, null, 2).replace(/'/g, "\\'")}')" style="padding: 8px 16px;">复制结果</button>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>批量查询失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 任务列表功能
+        async function refreshTaskList() {
+            const page = document.getElementById('listPage').value;
+            const pageSize = document.getElementById('listPageSize').value;
+            const status = document.getElementById('listStatus').value;
+            
+            const resultContent = document.getElementById('taskListContent');
+            resultContent.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading"></div><p style="margin-top: 20px;">正在加载任务列表...</p></div>';
+            
+            try {
+                let url = `/list_tts_tasks?page=${page}&page_size=${pageSize}`;
+                if (status) {
+                    url += `&status=${status}`;
+                }
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    const tasks = result.tasks;
+                    let tableHtml = `
+                        <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                            <p style="margin: 0; color: #666;">共 ${result.total} 个任务，当前第 ${result.page} / ${Math.ceil(result.total / result.limit)} 页</p>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>任务ID</th>
+                                    <th>文本内容</th>
+                                    <th>语言</th>
+                                    <th>状态</th>
+                                    <th>进度</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    tasks.forEach(task => {
+                        const statusBadge = getStatusBadge(task.status);
+                        const createTime = new Date(task.created_time * 1000).toLocaleString();
+                        
+                        tableHtml += `
+                            <tr>
+                                <td><span class="task-id">${task.task_id}</span></td>
+                                <td>${task.text_content}</td>
+                                <td>${task.language_id}</td>
+                                <td>${statusBadge}</td>
+                                <td>${Math.round(task.progress * 100)}%</td>
+                                <td>${createTime}</td>
+                                <td>
+                                    <button class="btn-secondary" onclick="copyTaskId('${task.task_id}')" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
+                                        <i class="fas fa-copy"></i> 复制ID
+                                    </button>
+                                    <button class="btn-primary" onclick="queryTaskFromList('${task.task_id}')" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
+                                        <i class="fas fa-search"></i> 查看
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHtml += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    resultContent.innerHTML = tableHtml;
+                } else {
+                    resultContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <strong>加载失败！</strong>
+                                <p>错误信息: ${result.msg || '未知错误'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>加载失败！</strong>
+                            <p>网络错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function getStatusBadge(status) {
+            const statusMap = {
+                pending: { text: '待处理', class: 'status-pending' },
+                processing: { text: '处理中', class: 'status-processing' },
+                completed: { text: '已完成', class: 'status-completed' },
+                failed: { text: '失败', class: 'status-failed' },
+                canceled: { text: '已取消', class: 'status-canceled' }
+            };
+            
+            const statusInfo = statusMap[status] || { text: status, class: 'status-pending' };
+            return `<span class="status-badge ${statusInfo.class}"><i class="fas fa-circle"></i> ${statusInfo.text}</span>`;
+        }
+        
+        function copyTaskId(taskId) {
+            copyToClipboard(taskId);
+            // 切换到任务管理标签页
+            document.querySelector('[data-tab=taskManagementTab]').click();
+            // 填写任务ID
+            document.getElementById('taskId').value = taskId;
+        }
+        
+        function queryTaskFromList(taskId) {
+            // 切换到任务管理标签页
+            document.querySelector('[data-tab=taskManagementTab]').click();
+            // 填写任务ID
+            document.getElementById('taskId').value = taskId;
+            // 自动查询状态
+            getTaskStatus();
+        }
+        
+        async function exportTaskList() {
+            alert('导出功能暂未实现');
+        }
+        
+        // 辅助函数
+        function pasteFromClipboard(elementId) {
+            navigator.clipboard.readText().then(text => {
+                document.getElementById(elementId).value = text;
+            }).catch(err => {
+                console.error('无法从剪贴板粘贴:', err);
+            });
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板');
+            }).catch(err => {
+                console.error('无法复制到剪贴板:', err);
+            });
+        }
+        
+        function showToast(message) {
+            // 创建toast元素
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #2E7D32;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                font-size: 14px;
+                font-weight: 500;
+                animation: fadeInOut 3s ease;
+            `;
+            toast.textContent = message;
+            
+            // 添加toast到页面
+            document.body.appendChild(toast);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // 添加toast动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateX(100%); }
+                10% { opacity: 1; transform: translateX(0); }
+                90% { opacity: 1; transform: translateX(0); }
+                100% { opacity: 0; transform: translateX(100%); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
