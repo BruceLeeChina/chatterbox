@@ -23,7 +23,12 @@ dependencies = [
     "pykakasi==2.3.0",
     "gradio==5.44.1",
     "pyloudnorm",
-    "omegaconf"
+    "omegaconf",
+    "aiohttp",
+    "aiofiles",
+    "uvicorn",
+    "fastapi",
+    "jinja2"
 ]
 
 [project.urls]

@@ -1,3 +1,27 @@
+1. 直接运行
+本地启动：
+# 安装依赖
+<!-- pip install -r requirements.txt -->
+pip install -e .
+
+# 启动服务
+python server.py --host 0.0.0.0 --port 8001 --device cpu
+
+# 访问Web界面
+http://localhost:8001
+
+
+2. Docker 运行
+# 构建镜像
+docker build -f Dockerfile.tts -t chatterbox-tts .
+
+# 运行容器
+docker run -p 8001:8001 chatterbox-tts
+
+# 或使用 Compose
+docker-compose -f docker-compose.tts.yml up
+
+===================================================================================================================================================================================
 ![Chatterbox Turbo Image](./Chatterbox-Turbo.jpg)
 
 
