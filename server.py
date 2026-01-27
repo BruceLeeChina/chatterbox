@@ -26,17 +26,16 @@ from fastapi.templating import Jinja2Templates
 import torch
 import soundfile as sf
 
-# 尝试导入TTS模块，先尝试启用xformers，失败则禁用
+# 尝试导入TTS模块，处理xformers兼容性问题
 try:
     from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES
 except ImportError as e:
     import logging
     logger = logging.getLogger(__name__)
-    logger.warning(f"导入TTS模块失败，可能是xformers兼容性问题: {e}")
+    logger.error(f"导入TTS模块失败: {e}")
     # 尝试禁用xformers并重新导入
     import os
     os.environ["XFORMERS_DISABLE"] = "1"  # 禁用xformers
-    logger.info("已禁用xformers，重新尝试导入TTS模块")
     from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES
 
 # 日志配置

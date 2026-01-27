@@ -5,7 +5,7 @@
 pip install -e .
 
 # 启动服务
-python server.py --host 0.0.0.0 --port 8001 --device cpu
+python server.py --host 0.0.0.0 --port 8001 --device cuda
 
 # 访问Web界面
 http://localhost:8001

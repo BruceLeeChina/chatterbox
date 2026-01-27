@@ -29,8 +29,7 @@ dependencies = [
     "uvicorn",
     "fastapi",
     "jinja2",
-    "soundfile",
-    "xformers"
+    "soundfile"
 ]
 
 [project.urls]
