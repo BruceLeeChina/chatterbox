@@ -594,6 +594,8 @@ async def submit_tts_task_with_predefined_audio(
         
         if language_id not in SUPPORTED_LANGUAGES:
             raise HTTPException(status_code=400, detail=f"不支持的语言: {language_id}")
+        # 打印所有入参
+        logger.info(f"入参: {text}, {language_id}, {predefined_audio_filename}, {exaggeration}, {temperature}, {cfg_weight}, {seed_num}, {audio_format}, {sample_rate}, {callback_url}, {app_id}, {biz_type}, {biz_unique_id}")
         
         # 验证预定义音频文件是否存在
         predefined_audio_path = os.path.join(PREDEFINED_AUDIO_DIR, predefined_audio_filename)

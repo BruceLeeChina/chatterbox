@@ -1828,6 +1828,7 @@ task_001, task_002, task_003
                                     <th>语言</th>
                                     <th>状态</th>
                                     <th>进度</th>
+                                    <th>回调状态</th>
                                     <th>创建时间</th>
                                     <th>操作</th>
                                 </tr>
@@ -1846,6 +1847,7 @@ task_001, task_002, task_003
                                 <td>${task.language_id}</td>
                                 <td>${statusBadge}</td>
                                 <td>${Math.round(task.progress * 100)}%</td>
+                                <td>${getCallbackStatusBadge(task.callback_status)}</td>
                                 <td>${createTime}</td>
                                 <td>
                                     <button class="btn-secondary" onclick="copyTaskId('${task.task_id}')" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
@@ -1900,6 +1902,20 @@ task_001, task_002, task_003
             
             const statusInfo = statusMap[status] || { text: status, class: 'status-pending' };
             return `<span class="status-badge ${statusInfo.class}"><i class="fas fa-circle"></i> ${statusInfo.text}</span>`;
+        }
+        
+        function getCallbackStatusBadge(callbackStatus) {
+            const callbackStatusMap = {
+                'pending': { text: '待回调', class: 'status-pending' },
+                'success': { text: '回调成功', class: 'status-completed' },
+                'failed': { text: '回调失败', class: 'status-failed' },
+                '': { text: '-', class: 'status-processing' },
+                'null': { text: '-', class: 'status-processing' }
+            };
+            
+            const status = callbackStatus || 'null';
+            const statusInfo = callbackStatusMap[status] || { text: callbackStatus, class: 'status-pending' };
+            return `<span class="status-badge ${statusInfo.class}"><i class="fas fa-${status === 'success' ? 'check' : status === 'failed' ? 'times' : 'clock'}"></i> ${statusInfo.text}</span>`;
         }
         
         function copyTaskId(taskId) {

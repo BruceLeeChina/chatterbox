@@ -71,6 +71,8 @@ Chatterbox TTS支持以下23种语言：
 
 **接口地址**：`POST /submit_tts_task`
 
+**请求格式**：`multipart/form-data`
+
 **请求参数**：
 
 | 参数名 | 类型 | 是否必填 | 说明 |
@@ -491,6 +493,46 @@ Chatterbox TTS支持以下23种语言：
 
 ## 7. 使用示例
 
+### 7.0 请求格式说明
+
+**multipart/form-data 请求格式详解：**
+
+当使用 multipart/form-data 格式提交请求时，HTTP 请求体将包含多个部分（parts），每个字段作为一个独立的部分，用边界字符串（boundary）分隔。
+
+典型的请求格式如下：
+```
+POST /submit_tts_task HTTP/1.1
+Host: 127.0.0.1:8001
+Content-Type: multipart/form-data; boundary=----geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Length: [长度]
+
+------geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Disposition: form-data; name="text"
+
+上个月，我们达到了一个新的里程碑。我们的YouTube频道观看次数达到了二十亿次，这绝对令人难以置信。
+------geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Disposition: form-data; name="language_id"
+
+zh
+------geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Disposition: form-data; name="exaggeration"
+
+0.5
+------geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Disposition: form-data; name="temperature"
+
+0.8
+------geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Disposition: form-data; name="cfg_weight"
+
+0.5
+------geckoformboundaryc64813beefc21f3524719d83c1e59604
+Content-Disposition: form-data; name="seed_num"
+
+0
+------geckoformboundaryc64813beefc21f3524719d83c1e59604--
+```
+
 ### 7.1 单任务提交示例
 
 **使用curl提交TTS任务：**
@@ -498,6 +540,24 @@ Chatterbox TTS支持以下23种语言：
 curl -X POST "http://localhost:8001/submit_tts_task" \
   -F "text=测试文本内容" \
   -F "language_id=zh"
+```
+
+**使用curl提交包含参考音频的TTS任务：**
+```bash
+curl -X POST "http://localhost:8001/submit_tts_task" \
+  -F "text=上个月，我们达到了一个新的里程碑。我们的YouTube频道观看次数达到了二十亿次，这绝对令人难以置信。" \
+  -F "language_id=zh" \
+  -F "audio_prompt=@reference_audio.wav" \
+  -F "exaggeration=0.5" \
+  -F "temperature=0.8" \
+  -F "cfg_weight=0.5" \
+  -F "seed_num=0"
+```
+
+**请求头说明：**
+当使用 multipart/form-data 格式时，Content-Type 头部将自动设置，例如：
+```
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary随机字符串
 ```
 
 **响应示例：**
