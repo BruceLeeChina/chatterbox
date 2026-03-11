@@ -13,13 +13,13 @@ http://localhost:8001
 
 2. Docker 运行
 # 构建镜像
-docker build -f Dockerfile.tts -t chatterbox-tts .
+docker build -f Dockerfile -t chatterbox-tts .
 
 # 运行容器
 docker run -p 8001:8001 chatterbox-tts
 
 # 或使用 Compose
-docker-compose -f docker-compose.tts.yml up
+docker-compose -f docker-compose.yml up
 
 
 CPU切换GPU:
